@@ -469,3 +469,4 @@ def evaluar_hora(d: pd.DataFrame, i: int) -> dict:
         senal = r.get("senal_adv", np.nan)
 
         if pd.notna(senal) and senal >= 0.1:
+
