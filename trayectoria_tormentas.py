@@ -244,3 +244,4 @@ def trayectoria_reciente(anillo: pd.DataFrame, ahora: pd.Timestamp,
         "se_acerca": bool(np.hypot(c["este"].iloc[-1], c["norte"].iloc[-1])
                           < np.hypot(c["este"].iloc[0], c["norte"].iloc[0]) - 5),
     }
+
