@@ -1,0 +1,61 @@
+name: Alertas de tormenta
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      prueba:
+        description: "Enviar solo una notificación de prueba"
+        type: boolean
+        default: false
+
+concurrency:
+  group: alertas
+  cancel-in-progress: false
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Recuperar el último nivel de alerta
+        uses: actions/cache/restore@v4
+        with:
+          path: estado_alerta.json
+          key: estado-alerta-${{ github.run_id }}
+          restore-keys: estado-alerta-
+
+      - name: Instalar dependencias
+        run: pip install numpy pandas requests h5py plotly
+
+      - name: Revisar tormentas
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          APP_URL: https://cpcm687pwzrfuuvmjauk9w.streamlit.app/
+        run: |
+          if [ "${{ inputs.prueba }}" = "true" ]; then
+            python alerta.py --prueba
+          else
+            python alerta.py
+          fi
+
+      - name: Asegurar archivo de estado
+        if: always()
+        run: "[ -f estado_alerta.json ] || echo '{}' > estado_alerta.json"
+
+      - name: Guardar el nivel de alerta
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: estado_alerta.json
+          key: estado-alerta-${{ github.run_id }}
